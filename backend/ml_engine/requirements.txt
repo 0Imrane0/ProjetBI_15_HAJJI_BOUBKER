@@ -1,0 +1,11 @@
+# ML Engine Specific Dependencies
+# These are also included in ../requirements.txt
+# This file documents what THIS module needs
+
+pandas==2.2.0
+numpy==1.26.0
+scikit-learn==1.4.0
+scikit-surprise==1.1.3
+joblib==1.3.2
+scipy==1.12.0
+psycopg2-binary==2.9.9
