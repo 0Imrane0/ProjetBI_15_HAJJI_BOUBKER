@@ -8,8 +8,9 @@ requests==2.31.0
 
 # ============ Machine Learning & Data Science ============
 pandas==2.2.0
-numpy==1.26.0
+numpy==1.26.4
 scikit-learn==1.4.0
-scikit-surprise==1.1.3
+# TEMPORAIRE: scikit-surprise commenté pour tester l'infrastructure
+# scikit-surprise==1.1.3
 joblib==1.3.2
 scipy==1.12.0
