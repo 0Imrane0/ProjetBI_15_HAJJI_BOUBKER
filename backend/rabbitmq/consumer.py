@@ -92,13 +92,32 @@ def handle_navigation_log(event: dict, conn):
 
         # Insert log
         cur.execute("""
-            INSERT INTO navigation_logs (user_id, report_id, action, duration, timestamp)
-            VALUES (%s, %s, %s, %s, %s)
+            INSERT INTO navigation_logs (
+                source_event_id,
+                user_id,
+                report_id,
+                action,
+                event_type,
+                duration,
+                duration_source,
+                metabase_model,
+                metabase_model_id,
+                raw_payload,
+                timestamp
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT DO NOTHING
         """, (
+            event.get("source_event_id"),
             user_row["id"],
             report_row["id"],
             event.get("action", "view"),
+            event.get("event_type", event.get("action", "view")),
             event.get("duration", 0),
+            event.get("duration_source", "unknown"),
+            event.get("metabase_model", event.get("model")),
+            event.get("metabase_model_id", event.get("metabase_report_id")),
+            psycopg2.extras.Json(event),
             event.get("timestamp"),
         ))
 
@@ -127,18 +146,20 @@ def handle_user_sync(event: dict, conn):
 def handle_report_sync(event: dict, conn):
     with conn.cursor() as cur:
         cur.execute("""
-            INSERT INTO reports (metabase_report_id, title, description, category, updated_at)
-            VALUES (%s, %s, %s, %s, NOW())
+            INSERT INTO reports (metabase_report_id, title, description, category, business_category, updated_at)
+            VALUES (%s, %s, %s, %s, %s, NOW())
             ON CONFLICT (metabase_report_id) DO UPDATE SET
                 title = EXCLUDED.title,
                 description = EXCLUDED.description,
                 category = EXCLUDED.category,
+                business_category = EXCLUDED.business_category,
                 updated_at = NOW()
         """, (
             event.get("metabase_report_id"),
             event.get("title", "unknown"),
             event.get("description"),
             event.get("category"),
+            event.get("business_category"),
         ))
     conn.commit()
 
@@ -172,8 +193,17 @@ def queue_worker(queue_name: str):
     mq_conn = pika.BlockingConnection(params)
     channel = mq_conn.channel()
     channel.queue_declare(queue=queue_name, durable=True)
+    channel.basic_qos(prefetch_count=1)
+
+    def ensure_db_connection():
+        nonlocal db_conn
+        if db_conn.closed:
+            logger.warning(f"[{queue_name}] DB connection closed, reconnecting")
+            db_conn = get_db()
+        return db_conn
 
     def on_message(ch, method, properties, body):
+        nonlocal db_conn
         try:
             # 🔥 FIX HERE
             event = json.loads(body)
@@ -181,14 +211,24 @@ def queue_worker(queue_name: str):
             if isinstance(event, str):
                 event = json.loads(event)
 
-            handler(event, db_conn)
+            handler(event, ensure_db_connection())
 
             logger.info(f"[{queue_name}] ✅ processed")
             ch.basic_ack(delivery_tag=method.delivery_tag)
 
         except Exception as e:
             logger.error(f"[{queue_name}] ❌ {e}")
-            db_conn.rollback()
+            try:
+                if db_conn and not db_conn.closed:
+                    db_conn.rollback()
+            except Exception as rollback_error:
+                logger.error(f"[{queue_name}] rollback failed: {rollback_error}")
+
+            try:
+                db_conn = get_db()
+            except Exception as reconnect_error:
+                logger.error(f"[{queue_name}] DB reconnect failed: {reconnect_error}")
+
             ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
 
     channel.basic_consume(queue=queue_name, on_message_callback=on_message)

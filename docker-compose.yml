@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # ============ POSTGRESQL ============
   postgres:
@@ -124,6 +122,7 @@ services:
       DB_NAME: ${DB_NAME:-bi_recommendation}
       POLL_INTERVAL: ${POLL_INTERVAL:-5}
       USE_MOCK: ${USE_MOCK:-false}
+      SIMULATE_DURATION: ${SIMULATE_DURATION:-true}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     networks:
       - bi_network

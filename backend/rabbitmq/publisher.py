@@ -10,9 +10,11 @@ Streams 3 Metabase tables → RabbitMQ in parallel threads:
 import json
 import logging
 import os
+import hashlib
 import threading
 import time
 from datetime import datetime
+from typing import Optional
 
 import psycopg2
 import psycopg2.extras
@@ -38,6 +40,7 @@ DB_PASSWORD = os.getenv("DB_PASSWORD", "admin123")
 DB_NAME     = os.getenv("DB_NAME",     "bi_recommendation")
 
 POLL_INTERVAL = int(os.getenv("POLL_INTERVAL", "5"))
+SIMULATE_DURATION = os.getenv("SIMULATE_DURATION", "true").lower() == "true"
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -89,6 +92,47 @@ def publish(channel, queue: str, event: dict):
         body=json.dumps(event, default=str),
         properties=pika.BasicProperties(delivery_mode=2),
     )
+
+
+def stable_int(*parts) -> int:
+    raw = "|".join(str(part) for part in parts)
+    digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()
+    return int(digest[:8], 16)
+
+
+def simulated_duration(row: dict) -> int:
+    """Return a deterministic fake engagement duration for demo data."""
+    action = row.get("context") or "view"
+    if action == "selection":
+        low, high = 90, 600
+    else:
+        low, high = 15, 240
+
+    span = high - low + 1
+    seconds = low + stable_int(row["id"], row["user_id"], row["model_id"], action) % span
+
+    if row.get("model") == "dashboard":
+        seconds = int(seconds * 1.4)
+
+    return min(seconds, 900)
+
+
+def infer_business_category(title: str, description: Optional[str]) -> str:
+    text = f"{title or ''} {description or ''}".lower()
+    keywords = {
+        "sales": ["sales", "order", "pipeline", "revenue", "deal"],
+        "finance": ["profit", "cash", "margin", "cost", "discount"],
+        "marketing": ["marketing", "campaign", "email", "social", "funnel"],
+        "customer": ["customer", "churn", "satisfaction", "nps", "support"],
+        "product": ["product", "adoption", "category", "feature"],
+        "operations": ["inventory", "operational", "system", "performance", "quality"],
+    }
+
+    for category, terms in keywords.items():
+        if any(term in text for term in terms):
+            return category
+
+    return "general"
 
 
 # ─── Stream queries ───────────────────────────────────────────────────────────
@@ -157,13 +201,19 @@ def fetch_report_cards(conn, after_id: int) -> list:
 # ─── Row → event converters ───────────────────────────────────────────────────
 
 def view_to_event(row: dict) -> dict:
+    duration = simulated_duration(row) if SIMULATE_DURATION else 0
     return {
         "stream":             "recent_views",
+        "source_event_id":    row["id"],
         "metabase_user_id":   row["metabase_user_id"],
         "metabase_report_id": row["metabase_report_id"],
+        "metabase_model":     row["model"],
+        "metabase_model_id":  row["metabase_report_id"],
         "model":              row["model"],
         "action":             row["context"],
-        "duration":           0,
+        "event_type":         row["context"] or "view",
+        "duration":           duration,
+        "duration_source":    "simulated" if SIMULATE_DURATION else "unknown",
         "timestamp":          row["timestamp"].isoformat() if row["timestamp"] else datetime.utcnow().isoformat(),
         "user_email":         row["email"],
         "user_name":          f"{row['first_name'] or ''} {row['last_name'] or ''}".strip(),
@@ -188,6 +238,7 @@ def card_to_event(row: dict) -> dict:
         "title":              row["title"],
         "description":        row["description"],
         "category":           row["visualization_type"],
+        "business_category":  infer_business_category(row["title"], row["description"]),
         "created_at":         row["created_at"].isoformat() if row["created_at"] else None,
     }
 

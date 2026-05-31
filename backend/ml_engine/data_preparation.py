@@ -73,8 +73,11 @@ class DataPreparation:
                 user_id,
                 report_id,
                 duration,
+                duration_source,
                 timestamp,
-                action
+                action,
+                event_type,
+                metabase_model
             FROM navigation_logs
             ORDER BY timestamp DESC
         """
@@ -101,7 +104,8 @@ class DataPreparation:
                 title,
                 description,
                 tags,
-                category
+                category,
+                business_category
             FROM reports
             ORDER BY id
         """
@@ -182,6 +186,235 @@ class DataPreparation:
         logger.info(f"   Sparsity: {(matrix == 0).sum().sum() / (matrix.shape[0] * matrix.shape[1]) * 100:.2f}%")
         
         return matrix
+
+    def create_temporal_train_test_split(
+        self,
+        df,
+        test_ratio=0.2,
+        min_events_per_user=5,
+    ):
+        """
+        Split interactions by user timeline.
+
+        WHAT: Keep the oldest interactions for training and the most recent
+        interactions for testing.
+        WHY: Recommendation models should learn from the past and be evaluated
+        on future-like behavior, not on random leaked interactions.
+        HOW: For each user, sort events by timestamp and reserve the last 20%
+        by default for test.
+        """
+        required_columns = {"user_id", "report_id", "timestamp"}
+        missing_columns = required_columns - set(df.columns)
+        if missing_columns:
+            raise ValueError(f"Missing required columns: {sorted(missing_columns)}")
+
+        if df.empty:
+            logger.warning("⚠️ Empty dataframe received for train/test split")
+            return df.copy(), df.copy()
+
+        work_df = df.copy()
+        work_df["timestamp"] = pd.to_datetime(work_df["timestamp"])
+        work_df = work_df.sort_values(["user_id", "timestamp"])
+
+        train_parts = []
+        test_parts = []
+
+        for _, user_df in work_df.groupby("user_id", sort=False):
+            if len(user_df) < min_events_per_user:
+                train_parts.append(user_df)
+                continue
+
+            test_size = max(1, int(np.ceil(len(user_df) * test_ratio)))
+            split_index = len(user_df) - test_size
+            train_parts.append(user_df.iloc[:split_index])
+            test_parts.append(user_df.iloc[split_index:])
+
+        train_df = pd.concat(train_parts, ignore_index=True) if train_parts else work_df.iloc[0:0]
+        test_df = pd.concat(test_parts, ignore_index=True) if test_parts else work_df.iloc[0:0]
+
+        logger.info("\n✅ Temporal train/test split created")
+        logger.info(f"   Train events: {len(train_df)} ({len(train_df) / len(work_df) * 100:.2f}%)")
+        logger.info(f"   Test events: {len(test_df)} ({len(test_df) / len(work_df) * 100:.2f}%)")
+        logger.info(f"   Train users: {train_df['user_id'].nunique() if not train_df.empty else 0}")
+        logger.info(f"   Test users: {test_df['user_id'].nunique() if not test_df.empty else 0}")
+
+        return train_df, test_df
+
+    def create_interaction_features(self, df, reference_time=None):
+        """
+        Build user-report interaction features.
+
+        WHAT: Aggregate raw events into one row per user/report pair.
+        WHY: Models need a compact signal that says how strong each user-report
+        relationship is.
+        HOW: Combine frequency, duration, action strength, and recency.
+        """
+        required_columns = {"user_id", "report_id", "action", "duration", "timestamp"}
+        missing_columns = required_columns - set(df.columns)
+        if missing_columns:
+            raise ValueError(f"Missing required columns: {sorted(missing_columns)}")
+
+        if df.empty:
+            logger.warning("⚠️ Empty dataframe received for interaction features")
+            return pd.DataFrame()
+
+        work_df = df.copy()
+        work_df["timestamp"] = pd.to_datetime(work_df["timestamp"])
+        work_df["duration"] = work_df["duration"].fillna(0).clip(lower=0)
+        work_df["action_weight"] = work_df["action"].map(
+            {"view": 1.0, "selection": 2.5}
+        ).fillna(1.0)
+
+        if reference_time is None:
+            reference_time = work_df["timestamp"].max()
+        reference_time = pd.to_datetime(reference_time)
+
+        features = work_df.groupby(["user_id", "report_id"]).agg(
+            view_count=("report_id", "size"),
+            selection_count=("action", lambda actions: (actions == "selection").sum()),
+            total_duration=("duration", "sum"),
+            avg_duration=("duration", "mean"),
+            action_weight_sum=("action_weight", "sum"),
+            first_viewed=("timestamp", "min"),
+            last_viewed=("timestamp", "max"),
+        ).reset_index()
+
+        features["recency_days"] = (
+            reference_time - features["last_viewed"]
+        ).dt.total_seconds() / 86400
+        features["recency_days"] = features["recency_days"].clip(lower=0)
+        features["recency_boost"] = np.exp(-features["recency_days"] / 14)
+        features["selection_rate"] = (
+            features["selection_count"] / features["view_count"]
+        ).fillna(0)
+
+        raw_score = (
+            np.log1p(features["view_count"])
+            + 0.35 * np.log1p(features["total_duration"])
+            + 0.8 * features["selection_count"]
+            + features["recency_boost"]
+        )
+        if raw_score.max() > raw_score.min():
+            features["implicit_rating"] = 1 + 4 * (
+                (raw_score - raw_score.min()) / (raw_score.max() - raw_score.min())
+            )
+        else:
+            features["implicit_rating"] = 1.0
+
+        logger.info("\n✅ Interaction features created")
+        logger.info(f"   Rows: {len(features)} user-report pairs")
+        logger.info(
+            f"   Rating range: {features['implicit_rating'].min():.2f} - "
+            f"{features['implicit_rating'].max():.2f}"
+        )
+        return features
+
+    def create_user_features(self, logs_df, reports_df):
+        """
+        Build user-level features.
+
+        WHAT: Summarize each user's behavior.
+        WHY: Useful for segmentation, hybrid ranking, and debugging recommendations.
+        HOW: Aggregate activity volume, diversity, duration, selection rate, and
+        favorite business category.
+        """
+        if logs_df.empty:
+            logger.warning("⚠️ Empty logs received for user features")
+            return pd.DataFrame()
+
+        work_df = logs_df.copy()
+        work_df["timestamp"] = pd.to_datetime(work_df["timestamp"])
+        work_df["duration"] = work_df["duration"].fillna(0).clip(lower=0)
+
+        user_features = work_df.groupby("user_id").agg(
+            event_count=("report_id", "size"),
+            unique_reports=("report_id", "nunique"),
+            total_duration=("duration", "sum"),
+            avg_duration=("duration", "mean"),
+            selection_count=("action", lambda actions: (actions == "selection").sum()),
+            first_seen=("timestamp", "min"),
+            last_seen=("timestamp", "max"),
+        ).reset_index()
+        user_features["selection_rate"] = (
+            user_features["selection_count"] / user_features["event_count"]
+        ).fillna(0)
+        user_features["activity_span_days"] = (
+            user_features["last_seen"] - user_features["first_seen"]
+        ).dt.total_seconds() / 86400
+
+        if not reports_df.empty and "business_category" in reports_df.columns:
+            report_categories = reports_df[["id", "business_category"]].rename(
+                columns={"id": "report_id"}
+            )
+            category_events = work_df.merge(report_categories, on="report_id", how="left")
+            category_events["business_category"] = category_events[
+                "business_category"
+            ].fillna("general")
+            favorite_category = (
+                category_events.groupby(["user_id", "business_category"])
+                .size()
+                .reset_index(name="category_events")
+                .sort_values(["user_id", "category_events"], ascending=[True, False])
+                .drop_duplicates("user_id")
+                [["user_id", "business_category"]]
+                .rename(columns={"business_category": "favorite_category"})
+            )
+            user_features = user_features.merge(favorite_category, on="user_id", how="left")
+        else:
+            user_features["favorite_category"] = "general"
+
+        logger.info("\n✅ User features created")
+        logger.info(f"   Users: {len(user_features)}")
+        return user_features
+
+    def create_report_features(self, logs_df, reports_df):
+        """
+        Build report-level features.
+
+        WHAT: Summarize popularity and engagement for each report.
+        WHY: Useful for popularity baselines, cold-start handling, and hybrid models.
+        HOW: Combine usage statistics with report metadata.
+        """
+        if reports_df.empty:
+            logger.warning("⚠️ Empty reports received for report features")
+            return pd.DataFrame()
+
+        work_df = logs_df.copy()
+        work_df["timestamp"] = pd.to_datetime(work_df["timestamp"])
+        work_df["duration"] = work_df["duration"].fillna(0).clip(lower=0)
+
+        report_features = work_df.groupby("report_id").agg(
+            event_count=("user_id", "size"),
+            unique_users=("user_id", "nunique"),
+            total_duration=("duration", "sum"),
+            avg_duration=("duration", "mean"),
+            selection_count=("action", lambda actions: (actions == "selection").sum()),
+            last_seen=("timestamp", "max"),
+        ).reset_index()
+        report_features["selection_rate"] = (
+            report_features["selection_count"] / report_features["event_count"]
+        ).fillna(0)
+        report_features["popularity_score"] = np.log1p(report_features["event_count"])
+
+        metadata = reports_df.rename(columns={"id": "report_id"})
+        report_features = metadata.merge(report_features, on="report_id", how="left")
+        numeric_columns = [
+            "event_count",
+            "unique_users",
+            "total_duration",
+            "avg_duration",
+            "selection_count",
+            "selection_rate",
+            "popularity_score",
+        ]
+        report_features[numeric_columns] = report_features[numeric_columns].fillna(0)
+        report_features["business_category"] = report_features[
+            "business_category"
+        ].fillna("general")
+
+        logger.info("\n✅ Report features created")
+        logger.info(f"   Reports: {len(report_features)}")
+        return report_features
     
     def close(self):
         """Close database connection."""
@@ -216,7 +449,19 @@ if __name__ == "__main__":
         
         # Create matrix
         if len(nav_logs) > 0:
+            train_df, test_df = prep.create_temporal_train_test_split(nav_logs)
+            logger.info(
+                f"\n📌 Split ready: train={len(train_df)} rows, test={len(test_df)} rows"
+            )
+            interaction_features = prep.create_interaction_features(train_df)
+            user_features = prep.create_user_features(train_df, reports)
+            report_features = prep.create_report_features(train_df, reports)
             matrix = prep.create_user_report_matrix(nav_logs)
+            logger.info(
+                "\n📌 Features ready: "
+                f"interactions={len(interaction_features)}, "
+                f"users={len(user_features)}, reports={len(report_features)}"
+            )
             logger.info("\n🎉 Data preparation completed successfully!")
         else:
             logger.warning("⚠️ No navigation logs found. Populate data first.")

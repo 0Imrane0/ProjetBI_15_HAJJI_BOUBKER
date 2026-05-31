@@ -11,9 +11,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --upgrade pip && \
+RUN python -m pip install --upgrade "pip<25" "setuptools<81" wheel Cython && \
     pip install --no-cache-dir "numpy<2.0.0" && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir --no-build-isolation -r requirements.txt
 
 COPY . .
 
