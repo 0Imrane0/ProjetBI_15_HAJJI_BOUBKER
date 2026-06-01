@@ -109,7 +109,12 @@ def simulated_duration(row: dict) -> int:
         low, high = 15, 240
 
     span = high - low + 1
-    seconds = low + stable_int(row["id"], row["user_id"], row["model_id"], action) % span
+    
+    # We use the aliased column names from fetch_recent_views
+    u_id = row.get("metabase_user_id", 0)
+    m_id = row.get("metabase_report_id", 0)
+    
+    seconds = low + stable_int(row["id"], u_id, m_id, action) % span
 
     if row.get("model") == "dashboard":
         seconds = int(seconds * 1.4)
@@ -202,6 +207,12 @@ def fetch_report_cards(conn, after_id: int) -> list:
 
 def view_to_event(row: dict) -> dict:
     duration = simulated_duration(row) if SIMULATE_DURATION else 0
+    
+    # Simuler une session d'une heure (hash md5)
+    ts = row["timestamp"] or datetime.utcnow()
+    session_raw = f"{row['metabase_user_id']}-{ts.strftime('%Y-%m-%d-%H')}"
+    session_id = hashlib.md5(session_raw.encode("utf-8")).hexdigest()
+
     return {
         "stream":             "recent_views",
         "source_event_id":    row["id"],
@@ -212,9 +223,10 @@ def view_to_event(row: dict) -> dict:
         "model":              row["model"],
         "action":             row["context"],
         "event_type":         row["context"] or "view",
+        "session_id":         session_id,
         "duration":           duration,
         "duration_source":    "simulated" if SIMULATE_DURATION else "unknown",
-        "timestamp":          row["timestamp"].isoformat() if row["timestamp"] else datetime.utcnow().isoformat(),
+        "timestamp":          ts.isoformat(),
         "user_email":         row["email"],
         "user_name":          f"{row['first_name'] or ''} {row['last_name'] or ''}".strip(),
     }

@@ -98,6 +98,7 @@ def handle_navigation_log(event: dict, conn):
                 report_id,
                 action,
                 event_type,
+                session_id,
                 duration,
                 duration_source,
                 metabase_model,
@@ -105,7 +106,7 @@ def handle_navigation_log(event: dict, conn):
                 raw_payload,
                 timestamp
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT DO NOTHING
         """, (
             event.get("source_event_id"),
@@ -113,6 +114,7 @@ def handle_navigation_log(event: dict, conn):
             report_row["id"],
             event.get("action", "view"),
             event.get("event_type", event.get("action", "view")),
+            event.get("session_id"),
             event.get("duration", 0),
             event.get("duration_source", "unknown"),
             event.get("metabase_model", event.get("model")),
