@@ -1,4 +1,6 @@
+# ═══════════════════════════════════════════════════════
 # Python
+# ═══════════════════════════════════════════════════════
 __pycache__/
 *.py[cod]
 *.pyo
@@ -13,48 +15,121 @@ venv/
 .env/
 .venv/
 
-# Environment variables
+# ═══════════════════════════════════════════════════════
+# Environment variables (secrets)
+# ═══════════════════════════════════════════════════════
 .env
 *.env
+!.env.example
 
-# VS Code
+# ═══════════════════════════════════════════════════════
+# IDE / Editor
+# ═══════════════════════════════════════════════════════
 .vscode/
+.idea/
+*.swp
+*.swo
+*~
 
+# ═══════════════════════════════════════════════════════
 # Jupyter Notebook
+# ═══════════════════════════════════════════════════════
 .ipynb_checkpoints/
 
+# ═══════════════════════════════════════════════════════
 # Logs
+# ═══════════════════════════════════════════════════════
 *.log
 
-# SQLite database
+# ═══════════════════════════════════════════════════════
+# Database files
+# ═══════════════════════════════════════════════════════
 *.db
 *.sqlite3
 
+# ═══════════════════════════════════════════════════════
 # Docker
+# ═══════════════════════════════════════════════════════
 docker-compose.override.yml
 
-# Node modules (if frontend exists)
+# ═══════════════════════════════════════════════════════
+# Node modules
+# ═══════════════════════════════════════════════════════
 node_modules/
 
+# ═══════════════════════════════════════════════════════
 # OS files
+# ═══════════════════════════════════════════════════════
 .DS_Store
 Thumbs.db
+*.lnk
 
-# Pytest
+# ═══════════════════════════════════════════════════════
+# Pytest / Coverage
+# ═══════════════════════════════════════════════════════
 .pytest_cache/
-
-# Coverage
 .coverage
 htmlcov/
 
+# ═══════════════════════════════════════════════════════
 # Temporary files
+# ═══════════════════════════════════════════════════════
 tmp/
 temp/
 
+# ═══════════════════════════════════════════════════════
 # FastAPI
+# ═══════════════════════════════════════════════════════
 *.pid
 
-# Metabase / BI exports
-*.csv
+# ═══════════════════════════════════════════════════════
+# Data exports (generated, not source)
+# ═══════════════════════════════════════════════════════
 *.xlsx
 *.parquet
+
+# ═══════════════════════════════════════════════════════
+# AI agent / Gemini workspace (internal dev tooling)
+# ═══════════════════════════════════════════════════════
+.gemini/
+
+# ═══════════════════════════════════════════════════════
+# Internal planning docs — NOT for prof
+# These are dev-only collaboration guides, roadmaps,
+# and progress tracking files used during development.
+# ═══════════════════════════════════════════════════════
+docs/GUIDE_COLLABORATION.md
+docs/GUIDE_PERSON_A.md
+docs/GUIDE_PERSON_B.md
+docs/PROJECT_PROGRESS_STATUS.md
+docs/PROJECT_DOCUMENTATION.md
+docs/DETAILED_ROADMAP_2PERSONS*.md
+DATA_SETUP_GUIDE.md
+SETUP_INSTRUCTIONS.md
+QUICK_START.md
+setup_data.ps1
+setup_data.sh
+setup_from_docker.ps1
+setup_from_docker.sh
+
+# ═══════════════════════════════════════════════════════
+# Project details (raw screenshots / TP source)
+# ═══════════════════════════════════════════════════════
+project_details/
+
+# ═══════════════════════════════════════════════════════
+# Duplicate files at root (already exist in backend/)
+# ═══════════════════════════════════════════════════════
+/create_metabase_reports.py
+/generate_data.py
+
+# ═══════════════════════════════════════════════════════
+# Typst compilation output
+# ═══════════════════════════════════════════════════════
+*.pdf
+
+# ═══════════════════════════════════════════════════════
+# Old markdown version of the report (replaced by .typ)
+# ═══════════════════════════════════════════════════════
+docs/final_report/RAPPORT_ACADEMIQUE_FINAL.md
+docs/final_report/README_TYPST.md

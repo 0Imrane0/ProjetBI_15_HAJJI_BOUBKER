@@ -27,7 +27,7 @@ Au lieu de laisser les utilisateurs naviguer dans des centaines de rapports, not
 
 L'image ci-dessous résume tous les composants et interactions du projet:
 
-![Mind Map BI Adaptative](./docs/images/mindmap-complete.png)
+![Mind Map BI Adaptative](./docs/final_report/assets/mindmap-complete.png)
 
 *Légende: Mind map complète montrant l'architecture, les technologies, les modèles ML, et l'intégration utilisateur*
 
@@ -71,7 +71,7 @@ L'image ci-dessous résume tous les composants et interactions du projet:
 
 Notre architecture repose sur 5 couches intégrées:
 
-![Architecture BI Adaptative](./docs/images/architecture-layers.png)
+![Architecture BI Adaptative](./docs/final_report/assets/architecture-layers.png)
 
 *Architecture en couches: Frontend (Metabase) → Message Broker (RabbitMQ) → Backend (Python Consumer) → Storage (PostgreSQL) → AI Engine (ML Models)*
 
@@ -97,7 +97,7 @@ Notre architecture repose sur 5 couches intégrées:
 
 Visualisation du flux complet:
 
-![Flux Complet BI Adaptative](./docs/images/full-flow.png)
+![Flux Complet BI Adaptative](./docs/final_report/assets/full-flow.png)
 
 *Le flux montre chaque composant et comment les données circulent dans le système*
 
@@ -391,11 +391,9 @@ docker-compose exec postgresql psql -U aibi_user -d bi_adaptive
 
 ## 📖 Documentation
 
-- **[ROADMAP.md](./ROADMAP.md)** : Plan détaillé avec 24 tâches
-- **[ARCHITECTURE.md](./ARCHITECTURE.md)** : Documentation architecture
-- **[API.md](./docs/API.md)** : Documentation API
-- **[DEPLOYMENT.md](./docs/DEPLOYMENT.md)** : Guide déploiement
-- **[TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md)** : Dépannage
+- **[docs/final_report/](./docs/final_report/)** : Rapport académique et documentation de soutenance
+- **[docs/LOCAL_DEMO_GUIDE.md](./docs/LOCAL_DEMO_GUIDE.md)** : Guide de démonstration locale
+- **[docs/PHASE6_TEST_REPORT.md](./docs/PHASE6_TEST_REPORT.md)** : Rapport de tests Phase 6
 
 ---
 
