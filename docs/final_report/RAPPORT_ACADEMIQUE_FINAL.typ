@@ -1394,23 +1394,42 @@ l'*impact métier*.
 // 15. SCÉNARIO DE DÉMONSTRATION
 // ═══════════════════════════════════════════════════════════════════════════
 
-= Scénario de démonstration en soutenance
+= Scénario de démonstration en soutenance (Click-by-Click)
 
-Le scénario détaillé est fourni dans :
-`docs/final_report/SCENARIO_DEMO_PROF.md`.
+L'objectif de la démonstration est de prouver en temps réel le fonctionnement de la chaîne complète de bout en bout. Voici le déroulement exact présenté lors de la soutenance :
 
-Objectif : montrer *en direct* la chaîne complète de bout en bout, avec
-preuves quantitatives et indicateurs de monitoring.
+== 1. Infrastructure et Interface BI (Metabase)
 
-== Déroulement prévu
+Nous commençons par valider que les 6 services Docker (PostgreSQL, RabbitMQ, Publisher, Consumer, FastAPI, Metabase) sont actifs. 
 
-+ *Lancer* l'infrastructure : `docker-compose up -d` → vérifier `docker-compose ps`
-+ *Montrer* Metabase avec les rapports et dashboards
-+ *Exécuter* le script de démo : `python backend/demo_local.py`
-+ *Interroger* l'API : `GET /recommendations/42?n=5`
-+ *Montrer* les recommandations stockées : `GET /stored-recommendations/42`
-+ *Afficher* le monitoring : `GET /monitoring/summary`
-+ *Montrer* les preuves en base : requêtes SQL directes
+L'utilisateur final interagit avec Metabase, notre interface BI. C'est ici que l'on observe la problématique initiale : une multitude de rapports disponibles, nécessitant un guidage personnalisé.
+
+#figure(
+  image("assets/demo-metabase.jpg", width: 85%),
+  caption: [Maquette de l'interface utilisateur type (Metabase) avec panneau de recommandations],
+)
+
+== 2. Collecte Asynchrone (RabbitMQ)
+
+Chaque clic ou vue dans l'interface génère un événement. Pour garantir la résilience, ces événements transitent par notre Message Broker (RabbitMQ) avant d'être consommés et stockés dans PostgreSQL, assurant le découplage parfait du système.
+
+#figure(
+  image("assets/demo-rabbitmq.jpg", width: 85%),
+  caption: [Console d'administration RabbitMQ montrant l'activité des files asynchrones],
+)
+
+== 3. Moteur ML et API REST (FastAPI)
+
+Une fois les données collectées et préparées, le modèle hybride est sollicité via notre API FastAPI. Nous démontrons l'entraînement du modèle (`POST /train`) et la récupération instantanée des recommandations via le Batch Serving et le Monitoring.
+
+#figure(
+  image("assets/demo-swagger.jpg", width: 85%),
+  caption: [Interface Swagger (FastAPI) exposant les endpoints ML et de monitoring],
+)
+
+== 4. Tests et Preuve de Résilience
+
+Pour conclure la démonstration, nous exécutons le script de validation globale (`tests/run_phase6_tests.py`) qui atteste du bon fonctionnement unitaire, d'intégration et bout-en-bout (E2E) du pipeline. Nous démontrons également la résilience du système face à une perte de connexion de la base de données.
 
 #pagebreak()
 
