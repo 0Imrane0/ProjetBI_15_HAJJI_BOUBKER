@@ -1,0 +1,76 @@
+﻿{
+    "totals":  {
+                   "users":  100,
+                   "reports":  40,
+                   "navigation_logs":  9965,
+                   "logs_with_duration":  9965,
+                   "recommendations":  4500,
+                   "recommendation_batches":  9,
+                   "latest_event_at":  "2026-05-31T16:41:31.306062+00:00",
+                   "latest_batch_at":  "2026-05-31T16:42:40.765772+00:00"
+               },
+    "top_viewed_reports":  [
+                               {
+                                   "report_id":  4,
+                                   "title":  "Orders + People",
+                                   "business_category":  "sales",
+                                   "events":  1723
+                               },
+                               {
+                                   "report_id":  1,
+                                   "title":  "Total orders this quarter",
+                                   "business_category":  "sales",
+                                   "events":  368
+                               },
+                               {
+                                   "report_id":  28,
+                                   "title":  "Orders by source per individual age",
+                                   "business_category":  "sales",
+                                   "events":  316
+                               },
+                               {
+                                   "report_id":  33,
+                                   "title":  "Customer survey responses",
+                                   "business_category":  "customer",
+                                   "events":  313
+                               },
+                               {
+                                   "report_id":  9,
+                                   "title":  "Customer satisfaction per category",
+                                   "business_category":  "customer",
+                                   "events":  309
+                               }
+                           ],
+    "top_recommended_reports":  [
+                                    {
+                                        "report_id":  27,
+                                        "title":  "Orders by product category",
+                                        "business_category":  "sales",
+                                        "recommendations":  41
+                                    },
+                                    {
+                                        "report_id":  29,
+                                        "title":  "Product category orders per age group",
+                                        "business_category":  "sales",
+                                        "recommendations":  26
+                                    },
+                                    {
+                                        "report_id":  14,
+                                        "title":  "Product category orders per age",
+                                        "business_category":  "sales",
+                                        "recommendations":  23
+                                    },
+                                    {
+                                        "report_id":  28,
+                                        "title":  "Orders by source per individual age",
+                                        "business_category":  "sales",
+                                        "recommendations":  23
+                                    },
+                                    {
+                                        "report_id":  20,
+                                        "title":  "Revenue per individual age",
+                                        "business_category":  "sales",
+                                        "recommendations":  23
+                                    }
+                                ]
+}

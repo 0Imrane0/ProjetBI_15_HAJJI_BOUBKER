@@ -1,0 +1,82 @@
+﻿{
+    "user_id":  1,
+    "batch_id":  "batch_20260531_164240_5edd604e",
+    "count":  5,
+    "recommendations":  [
+                            {
+                                "rank":  1,
+                                "report_id":  39,
+                                "metabase_report_id":  27,
+                                "title":  "Quantity sold per quarter",
+                                "description":  "Total sum of products sold last quarter compared to the previous",
+                                "category":  "smartscalar",
+                                "business_category":  "product",
+                                "score":  0.7920020691132669,
+                                "algorithm":  "hybrid_knn_content",
+                                "model_version":  "{\"algorithm\": \"hybrid_knn_content\", \"cf_model\": \"knn\", \"cf_weight\": 0.6, \"content_weight\": 0.4}",
+                                "batch_id":  "batch_20260531_164240_5edd604e",
+                                "generated_at":  "2026-05-31T16:42:40.765772+00:00",
+                                "clicked":  false
+                            },
+                            {
+                                "rank":  2,
+                                "report_id":  27,
+                                "metabase_report_id":  24,
+                                "title":  "Orders by product category",
+                                "description":  "Compares the orders of each category quarter over quarter",
+                                "category":  "line",
+                                "business_category":  "sales",
+                                "score":  0.7184139200274493,
+                                "algorithm":  "hybrid_knn_content",
+                                "model_version":  "{\"algorithm\": \"hybrid_knn_content\", \"cf_model\": \"knn\", \"cf_weight\": 0.6, \"content_weight\": 0.4}",
+                                "batch_id":  "batch_20260531_164240_5edd604e",
+                                "generated_at":  "2026-05-31T16:42:40.765772+00:00",
+                                "clicked":  false
+                            },
+                            {
+                                "rank":  3,
+                                "report_id":  24,
+                                "metabase_report_id":  34,
+                                "title":  "Discounts given per quarter",
+                                "description":  "Total amount of discounts last quarter compared to the previous",
+                                "category":  "smartscalar",
+                                "business_category":  "finance",
+                                "score":  0.6946754442757783,
+                                "algorithm":  "hybrid_knn_content",
+                                "model_version":  "{\"algorithm\": \"hybrid_knn_content\", \"cf_model\": \"knn\", \"cf_weight\": 0.6, \"content_weight\": 0.4}",
+                                "batch_id":  "batch_20260531_164240_5edd604e",
+                                "generated_at":  "2026-05-31T16:42:40.765772+00:00",
+                                "clicked":  false
+                            },
+                            {
+                                "rank":  4,
+                                "report_id":  30,
+                                "metabase_report_id":  16,
+                                "title":  "Number of subscriptions",
+                                "description":  "Customers that signed up for our monthly subscription",
+                                "category":  "area",
+                                "business_category":  "customer",
+                                "score":  0.6083126767604995,
+                                "algorithm":  "hybrid_knn_content",
+                                "model_version":  "{\"algorithm\": \"hybrid_knn_content\", \"cf_model\": \"knn\", \"cf_weight\": 0.6, \"content_weight\": 0.4}",
+                                "batch_id":  "batch_20260531_164240_5edd604e",
+                                "generated_at":  "2026-05-31T16:42:40.765772+00:00",
+                                "clicked":  false
+                            },
+                            {
+                                "rank":  5,
+                                "report_id":  35,
+                                "metabase_report_id":  14,
+                                "title":  "Subscription seats over time",
+                                "description":  "Number of seats in an average subscription, showing increase and decrease",
+                                "category":  "waterfall",
+                                "business_category":  "general",
+                                "score":  0.607418290269041,
+                                "algorithm":  "hybrid_knn_content",
+                                "model_version":  "{\"algorithm\": \"hybrid_knn_content\", \"cf_model\": \"knn\", \"cf_weight\": 0.6, \"content_weight\": 0.4}",
+                                "batch_id":  "batch_20260531_164240_5edd604e",
+                                "generated_at":  "2026-05-31T16:42:40.765772+00:00",
+                                "clicked":  false
+                            }
+                        ]
+}

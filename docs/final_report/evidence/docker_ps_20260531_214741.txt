@@ -1,0 +1,7 @@
+﻿NAME           IMAGE                                 COMMAND                  SERVICE     CREATED        STATUS                  PORTS
+bi_backend     projetbi_15_hajji_boubker-backend     "uvicorn main:app --…"   backend     7 hours ago    Up 4 hours              0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp
+bi_consumer    projetbi_15_hajji_boubker-consumer    "python consumer.py"     consumer    4 hours ago    Up 4 hours              
+bi_metabase    metabase/metabase:latest              "/app/run_metabase.sh"   metabase    32 hours ago   Up 32 hours             0.0.0.0:3000->3000/tcp, [::]:3000->3000/tcp
+bi_postgres    postgres:15                           "docker-entrypoint.s…"   postgres    35 hours ago   Up 35 hours (healthy)   0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp
+bi_publisher   projetbi_15_hajji_boubker-publisher   "python publisher.py"    publisher   27 hours ago   Up 27 hours             
+bi_rabbitmq    rabbitmq:3-management                 "docker-entrypoint.s…"   rabbitmq    32 hours ago   Up 32 hours (healthy)   0.0.0.0:5672->5672/tcp, [::]:5672->5672/tcp, 0.0.0.0:15672->15672/tcp, [::]:15672->15672/tcp

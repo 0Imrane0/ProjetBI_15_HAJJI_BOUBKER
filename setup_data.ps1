@@ -36,14 +36,17 @@ Write-Host "====================================================================
 Write-Host "✅ ALL DATA SETUP COMPLETE!" -ForegroundColor Green
 Write-Host "============================================================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "📊 Next steps:" -ForegroundColor Yellow
-Write-Host "   1. Run: docker-compose up -d" -ForegroundColor White
-Write-Host "   2. Check logs: docker-compose logs -f publisher consumer" -ForegroundColor White
-Write-Host "   3. Open Metabase: http://localhost:3000" -ForegroundColor White
-Write-Host "   4. Verify data in PostgreSQL:" -ForegroundColor White
+Write-Host "📊 NEXT STEPS (copy/paste this sequence):" -ForegroundColor Yellow
 Write-Host ""
-Write-Host "      docker exec -it bi_postgres psql -U admin -d bi_recommendation" -ForegroundColor Gray
-Write-Host "      SELECT COUNT(*) FROM navigation_logs;" -ForegroundColor Gray
-Write-Host "      SELECT COUNT(*) FROM users;" -ForegroundColor Gray
-Write-Host "      SELECT COUNT(*) FROM reports;" -ForegroundColor Gray
+Write-Host "   docker-compose up -d" -ForegroundColor White
+Write-Host "   Start-Sleep -Seconds 10" -ForegroundColor White
+Write-Host "   docker-compose ps" -ForegroundColor White
+Write-Host "   docker-compose logs --tail=80 publisher" -ForegroundColor White
+Write-Host "   docker-compose logs --tail=80 consumer" -ForegroundColor White
+Write-Host "   docker exec bi_postgres psql -U admin -d bi_recommendation -c ""SELECT COUNT(*) FROM users; SELECT COUNT(*) FROM reports; SELECT COUNT(*) FROM navigation_logs;""" -ForegroundColor White
+Write-Host "   Invoke-RestMethod -Method Post ""http://localhost:8000/train"" | ConvertTo-Json -Depth 10" -ForegroundColor White
+Write-Host "   Invoke-RestMethod ""http://localhost:8000/recommendations/1?n=5"" | ConvertTo-Json -Depth 10" -ForegroundColor White
+Write-Host ""
+Write-Host "📘 Full tutorial:" -ForegroundColor Yellow
+Write-Host "   docs/final_report/TUTORIAL_TESTER_UTILISER_SOLUTION.md" -ForegroundColor Cyan
 Write-Host ""

@@ -1,0 +1,20 @@
+﻿ users 
+-------
+   100
+(1 row)
+
+ reports 
+---------
+      40
+(1 row)
+
+ navigation_logs 
+-----------------
+            9965
+(1 row)
+
+ recommendations 
+-----------------
+            4500
+(1 row)
+

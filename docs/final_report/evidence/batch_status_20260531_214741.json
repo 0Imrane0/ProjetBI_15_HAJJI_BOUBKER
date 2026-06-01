@@ -1,0 +1,31 @@
+﻿{
+    "last_runtime_batch":  {
+                               "batch_id":  "batch_20260531_164240_5edd604e",
+                               "generated_at":  "2026-05-31T16:42:40.765772+00:00",
+                               "requested_top_n":  5,
+                               "users":  100,
+                               "recommendations_inserted":  500,
+                               "model":  {
+                                             "ready":  true,
+                                             "last_trained_at":  "2026-05-31T16:42:41.964945+00:00",
+                                             "training_summary":  {
+                                                                      "algorithm":  "hybrid_knn_content",
+                                                                      "cf_model":  "knn",
+                                                                      "cf_weight":  0.6,
+                                                                      "content_weight":  0.4,
+                                                                      "events":  9965,
+                                                                      "users":  100,
+                                                                      "reports":  40,
+                                                                      "interaction_pairs":  2348,
+                                                                      "trained_at":  "2026-05-31T16:42:41.964945+00:00"
+                                                                  }
+                                         }
+                           },
+    "latest_stored_batch":  {
+                                "batch_id":  "batch_20260531_164240_5edd604e",
+                                "generated_at":  "2026-05-31T16:42:40.765772+00:00",
+                                "recommendations":  500,
+                                "users":  100,
+                                "model_version":  "{\"algorithm\": \"hybrid_knn_content\", \"cf_model\": \"knn\", \"cf_weight\": 0.6, \"content_weight\": 0.4}"
+                            }
+}
